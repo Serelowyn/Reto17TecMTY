@@ -27,7 +27,16 @@ for columna in df.columns[df.dtypes == object]:
 print(pd.crosstab(df["poutcome"], df["pdays"] == -1))
 #hay 6781 unknowns en poutcome
 
+# ------------------- tipos de variables
 
+"""las variables con menos de 20 valores distintos se consideran categoricas"""
+print(df.nunique())
+
+num_cols = [c for c in df.columns if df[c].dtype != object and df[c].nunique() >= 20]
+cat_cols = [c for c in df.columns if c not in num_cols]
+ 
+print("numericas:", len(num_cols), num_cols)
+print("categoricas:", len(cat_cols), cat_cols)
 
 # ------------------- 
 # ------------------- 
