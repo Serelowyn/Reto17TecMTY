@@ -189,9 +189,177 @@ print(confusion_matrix(y_validation, modelo_NN.predict(x_validation)))
 
 """con la primera aproximacion (15, 4) la red neuronal da 0.8256 en validacion, superior a la del modelo base (0.579) y casi igual que la regresion logistica. ahora se ajustan sus hiperparametros con las curvas de aprendizaje"""
 
+# ------------------- curvas de aprendizaje
 
+neuronas = [i for i in range(1, 50, 5)]
+print(neuronas)
 
-# ------------------- 
+"""caso sub-entrenado: alpha muy grande (50), los pesos tienden a cero y el modelo no aprende"""
+print("alpha=50")
+train_scores, valid_scores = list(), list()
+train_errors, valid_errors = list(), list()
+
+for i in neuronas:
+    model = MLPClassifier(hidden_layer_sizes=(i, i),
+                          max_iter=3000,
+                          alpha=50,
+                          random_state=42)
+    model.fit(x_train, y_train)
+
+    #predicciones y metricas con el conjunto de entrenamiento
+    train_yhat = model.predict(x_train)
+    train_loss = np.mean(abs(y_train - train_yhat))
+    train_errors.append(train_loss)
+    train_acc = 1 - train_loss
+    train_scores.append(train_acc)
+
+    #predicciones y metricas con el conjunto de validacion
+    valid_yhat = model.predict(x_validation)
+    valid_loss = np.mean(abs(y_validation - valid_yhat))
+    valid_errors.append(valid_loss)
+    valid_acc = 1 - valid_loss
+    valid_scores.append(valid_acc)
+
+    #evolucion de las metricas durante el entrenamiento
+    print("> %d...\ttrainacc: %.3f, validacc: %.3f, trainloss: %.3f, validloss: %.3f"
+          % (i, train_acc, valid_acc, train_loss, valid_loss))
+
+plt.plot(neuronas, train_scores, "-o", label="Train")
+plt.plot(neuronas, valid_scores, "-o", label="Validacion")
+plt.legend()
+plt.title("Exactitud: Caso Sub-entrenado / Underfitting")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("exactitud")
+plt.show()
+
+plt.plot(neuronas, train_errors, "-o", label="Train")
+plt.plot(neuronas, valid_errors, "-o", label="Validacion")
+plt.legend()
+plt.title("caso sub-entrenado")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("error")
+plt.show()
+
+"""con alpha=50 la exactitud queda en 0.579 en entrenamiento y validacion con cualquier cantidad de neuronas. las curvas son planas y estan bajas, es el caso sub-entrenado, los pesos se van a cero y la red no aprende."""
+
+"""caso sobre-entrenado: alpha pequeno (0.15)"""
+print("alpha=0.15")
+train_scores, valid_scores = list(), list()
+train_errors, valid_errors = list(), list()
+
+for i in neuronas:
+    model = MLPClassifier(hidden_layer_sizes=(i, i),
+                          max_iter=3000,
+                          alpha=0.15,
+                          random_state=42)
+
+    model.fit(x_train, y_train)
+
+    #predicciones y metricas con el conjunto de entrenamiento
+    train_yhat = model.predict(x_train)
+    train_loss = np.mean(abs(y_train - train_yhat))
+    train_errors.append(train_loss)
+    train_acc = 1 - train_loss
+    train_scores.append(train_acc)
+
+    #predicciones y metricas con el conjunto de validacions
+    valid_yhat = model.predict(x_validation)
+    valid_loss = np.mean(abs(y_validation - valid_yhat))
+    valid_errors.append(valid_loss)
+    valid_acc = 1 - valid_loss
+    valid_scores.append(valid_acc)
+
+    #evolucion de las metricas durante el entrenamiento
+    print("> %d...\ttrainacc: %.3f, validacc: %.3f, trainloss: %.3f, validloss: %.3f"
+          % (i, train_acc, valid_acc, train_loss, valid_loss))
+
+plt.plot(neuronas, train_scores, "-o", label="Train")
+plt.plot(neuronas, valid_scores, "-o", label="Validacion")
+plt.legend()
+plt.title("sobre-entrenado")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("exactitud")
+plt.show()
+
+plt.plot(neuronas, train_errors, "-o", label="Train")
+plt.plot(neuronas, valid_errors, "-o", label="Validacion")
+plt.legend()
+plt.title("errores en el caso Sobre-entrenado")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("error")
+plt.show()
+
+"""cuando el valor de alpha es 0.15 la exactitud de entrenamiento sube de 0.86 a 0.97 al aumentar las neuronas, pero la de validacion se queda entre 0.83 y 0.84. el modelo memoriza el entrenamiento el caso sobre entrenado"""
+
+"""busqueda del mejor ajuste con alpha intermedio las dos curvas crecen juntas.."""
+print("alpha=0.7")
+train_scores, valid_scores = list(), list()
+train_errors, valid_errors = list(), list()
+
+for i in neuronas:
+    model = MLPClassifier(hidden_layer_sizes=(i, i),
+                          max_iter=1000,
+                          alpha=0.7,
+                          random_state=42)
+    model.fit(x_train, y_train)
+
+    #predicciones y metricas con el conjunto de entrenamiento
+    train_yhat = model.predict(x_train)
+    train_loss = np.mean(abs(y_train - train_yhat))
+    train_errors.append(train_loss)
+    train_acc = 1 - train_loss
+    train_scores.append(train_acc)
+
+    #predicciones y metricas con el conjunto de validacion
+    valid_yhat = model.predict(x_validation)
+    valid_loss = np.mean(abs(y_validation - valid_yhat))
+    valid_errors.append(valid_loss)
+    valid_acc = 1 - valid_loss
+    valid_scores.append(valid_acc)
+
+    #evolucion de las metricas durante el entrenamiento
+    print("> %d...\ttrainacc: %.3f, validacc: %.3f, trainloss: %.3f, validloss: %.3f"
+          % (i, train_acc, valid_acc, train_loss, valid_loss))
+
+plt.plot(neuronas, train_scores, "-o", label="Train")
+plt.plot(neuronas, valid_scores, "-o", label="Validacion")
+plt.legend()
+plt.title("exactitud caso del mejor ajuste")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("exactitud")
+plt.show()
+
+plt.plot(neuronas, train_errors, "-o", label="Train")
+plt.plot(neuronas, valid_errors, "-o", label="Validacion")
+plt.legend()
+plt.title("errores en el caso del mejor ajuste")
+plt.xlabel("neuronas en cada capa, de 2 ocultas")
+plt.ylabel("error")
+plt.show()
+
+print("busqueda de alpha y neuronas")
+resultados_NN = []
+for alpha in [0.7, 1.0, 3.0, 10.0]:
+    for i in neuronas:
+        model = MLPClassifier(hidden_layer_sizes=(i, i), max_iter=1000, alpha=alpha, random_state=42)
+        model.fit(x_train, y_train)
+        tr, va = model.score(x_train, y_train), model.score(x_validation, y_validation)
+        resultados_NN.append((alpha, i, tr, va))
+        print(f"alpha={alpha}, neuronas={i}: train={tr:.3f}, validacion={va:.3f}")
+
+res_NN = pd.DataFrame(resultados_NN, columns=["alpha", "neuronas", "train", "validacion"])
+display(res_NN.sort_values("validacion", ascending=False).head(5))
+
+mejor = res_NN.sort_values("validacion", ascending=False).iloc[0]
+mejor_alpha, mejor_neuronas = mejor["alpha"], int(mejor["neuronas"])
+print("mejor alpha:", mejor_alpha, "- mejor neuronas por capa:", mejor_neuronas)
+
+"""cuando tengo que (alpha=0.7) las curvas de entrenamiento y validacion crecen cerca una de la otra por eso es el mejor ajuste. alpha mas grande (entre 3-10) vuelve a bajar la validacion a 0.82 y 0.80 por que empieza el sub-entrenamiento, entonces el mejor en validacion es (alpha=0.7) con 21 neuronas por capa (0.8511) el cual empata con (alpha=1.0) con 11 neuronas, la exactitud de entrenamiento baja respecto al sobre-entrenado y eso es normal."""
+
+modelo_NN = MLPClassifier(hidden_layer_sizes=(mejor_neuronas, mejor_neuronas),
+                          max_iter=1000, alpha=mejor_alpha, random_state=42)
+modelo_NN.fit(x_train, y_train)
+
 # ------------------- 
 # ------------------- 
 # ------------------- 
