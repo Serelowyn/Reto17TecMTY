@@ -2,6 +2,7 @@
 
 import pandas as pd
 from matplotlib import pyplot as plt
+import numpy as np
 
 # ------------------- Fin de las importaciones
 
@@ -56,8 +57,40 @@ df[num_cols].hist(bins=30, figsize=(14, 8))
 plt.tight_layout()
 plt.show()
 
+"""balance, duration, campaign, pdays y previous tienen sesgo positivo, no son acampanadas como pide la regresion logistica"""
 
-# ------------------- 
+# -------------------# transformacion de datos categoricos y numericos
+#copia del df para el modelo
+df_model = df.copy()
+
+"""para el sesgo positivo se aplica una transformacion logaritmica. se usa log(1 + x) en duration, campaign y previous porque son no negativas y tienen ceros"""
+sesgadas = ["duration", "campaign", "previous"]
+for col in sesgadas:
+    df_model[col] = np.log1p(df_model[col])
+
+df_model[sesgadas].hist(bins=30, figsize=(12, 3), layout=(1, 3))
+plt.tight_layout()
+plt.show()
+
+"""despues del logaritmo duration y campaign se ven mejores, mas simetricas, a excepcion de previous que sigue teniendo muchos 0."""
+
+"""las binarias (yes/no): default, housing, loan y (y) se pasan a 1:yes/0:no. la clase 1 ha adquirio el plan."""
+binarias = ["default", "housing", "loan", "y"]
+for columna in binarias:
+    df_model[columna] = (df_model[columna] == "yes").astype(int)
+
+"""las categoricas con mas de dos niveles se pasan a OHEncoder. drop_first=True sirve para evitar repetir la info"""
+multiclase = ["job", "marital", "education", "contact", "month", "poutcome"]
+df_model = pd.get_dummies(df_model, columns=multiclase, drop_first=True, dtype=int)
+
+#revisar
+print(df_model.shape)
+print(df_model.head())
+"""7 numericas, 3 binarias y 32 dummies mas la variable de salida."""
+
+X = df_model.drop(columns="y")
+y = df_model["y"]
+
 # ------------------- 
 # ------------------- 
 # ------------------- 
