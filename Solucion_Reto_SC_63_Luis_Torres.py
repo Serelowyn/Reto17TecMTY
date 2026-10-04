@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
 from IPython.display import display
+from sklearn.neural_network import MLPClassifier
+
 
 # ------------------- Fin de las importaciones
 
@@ -177,7 +179,18 @@ print("mejor C en validacion:", mejor_C)
 modelo_RL = LogisticRegression(C=mejor_C, penalty=mejor_RL["penalty"], solver=mejor_RL["solver"], max_iter=1000, random_state=17)
 modelo_RL.fit(x_train, np.ravel(y_train))
 
-# ------------------- 
+# ------------------- modelo 2: red nueronal (perceptron multicapa)
+
+"""primera aproximacion con dos capas ocultas de 15 y 4 neuronas y max_iter=700, se mide con validacion y se ve su matriz de confusion."""
+modelo_NN = MLPClassifier(hidden_layer_sizes=(15, 4), max_iter=700, random_state=42)
+modelo_NN.fit(x_train, y_train)
+print("red neuronal (15, 4): exactitud validacion =", modelo_NN.score(x_validation, y_validation))
+print(confusion_matrix(y_validation, modelo_NN.predict(x_validation)))
+
+"""con la primera aproximacion (15, 4) la red neuronal da 0.8256 en validacion, superior a la del modelo base (0.579) y casi igual que la regresion logistica. ahora se ajustan sus hiperparametros con las curvas de aprendizaje"""
+
+
+
 # ------------------- 
 # ------------------- 
 # ------------------- 
