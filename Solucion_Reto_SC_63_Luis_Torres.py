@@ -101,7 +101,26 @@ x_validation, x_test, y_validation, y_test = train_test_split(x_temp, y_temp, te
 print(x_train.shape, x_validation.shape, x_test.shape)
 print(y_train.mean(), y_validation.mean(), y_test.mean())
 
-# ------------------- 
+# ------------------- # estandarizacion -> (x - media) / desviacion
+
+def fun2(X, media, desv):
+    return (X - media) / desv
+
+"""la media y la desviacion se calculan solo con entrenamiento y se aplican igual a validacion y prueba"""
+media = x_train[num_cols].mean()
+desv = x_train[num_cols].std()
+
+x_train = x_train.copy()
+x_validation = x_validation.copy()
+x_test = x_test.copy()
+x_train[num_cols] = fun2(x_train[num_cols], media, desv)
+x_validation[num_cols] = fun2(x_validation[num_cols], media, desv)
+x_test[num_cols] = fun2(x_test[num_cols], media, desv)
+
+print(x_train[num_cols].describe().round(2))
+
+"""las variables numericas de entrenamiento quedan con media 0 y desviacion std 1 lo que me indica un buen rango."""
+
 # ------------------- 
 # ------------------- 
 # ------------------- 
