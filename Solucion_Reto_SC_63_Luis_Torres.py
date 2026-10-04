@@ -9,7 +9,6 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from IPython.display import display
 from sklearn.neural_network import MLPClassifier
 
-
 # ------------------- Fin de las importaciones
 
 df = pd.read_csv(r"bank_marketing_RETO_DS_AS.csv")
@@ -126,7 +125,7 @@ print(x_train[num_cols].describe().round(2))
 
 """las variables numericas de entrenamiento quedan con media 0 y desviacion std 1 lo que me indica un buen rango."""
 
-# ------------------- # reegresion logistica
+# ------------------- regresion logistica
 
 """primera aproximacion solver newton-cg y C=1.0"""
 clf = LogisticRegression(C=1.0, solver="newton-cg", max_iter=1000)
@@ -144,7 +143,7 @@ print("C=0.2, lbfgs, l2:", modelo_RL_tmp.score(x_validation, y_validation))
 
 modelo_RL_hyper = LogisticRegression(C=0.1, penalty="l2", solver="lbfgs", random_state=5, max_iter=5)
 modelo_RL_hyper.fit(x_train, np.ravel(y_train))
-print("accuracy con max_iter=5 (no converge, por lo tanto, no es confiable): %0.4f" % modelo_RL_hyper.score(x_validation, y_validation))
+print("accuracy con max_iter=5 no converge, por lo tanto, no es confiable: %0.4f" % modelo_RL_hyper.score(x_validation, y_validation))
 
 print("busqueda de C, solver y penalty")
 resultados_RL = []
@@ -163,7 +162,7 @@ display(res_RL.head(5))
 mejor_RL = res_RL.iloc[0]
 print("mejor combinacion:", mejor_RL["solver"], mejor_RL["penalty"], "C =", mejor_RL["C"])
 
-print("busqueda fina de C alrededor del mejor")
+print("busqueda de C alrededor del mejor")
 resultados_C = []
 for C in np.linspace(mejor_RL["C"] / 2, mejor_RL["C"] * 2, 9):
     clf = LogisticRegression(C=C, penalty=mejor_RL["penalty"], solver=mejor_RL["solver"], max_iter=1000, random_state=17)
@@ -337,7 +336,7 @@ plt.xlabel("neuronas en cada capa, de 2 ocultas")
 plt.ylabel("error")
 plt.show()
 
-print("busqueda de alpha y neuronas")
+"""busqueda de alpha y neuronas"""
 resultados_NN = []
 for alpha in [0.7, 1.0, 3.0, 10.0]:
     for i in neuronas:
