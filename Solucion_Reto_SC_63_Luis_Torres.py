@@ -3,6 +3,7 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 # ------------------- Fin de las importaciones
 
@@ -91,7 +92,15 @@ print(df_model.head())
 X = df_model.drop(columns="y")
 y = df_model["y"]
 
-# ------------------- 
+# ------------------- Particion en entrenamiento, validacion y prueba
+
+"""se elige 60 entrenamiento, 20 validacion y 20 prueba, con train_test_split como en las lecciones. stratify mantiene la misma proporcion de (si/no) en los tres conjuntos y los pesos se calculan con entrenamiento, los hiperparametros se escogen con validacion y prueba solo se usa al final."""
+x_train, x_temp, y_train, y_temp = train_test_split(X, y, train_size=0.6, random_state=11, stratify=y)
+x_validation, x_test, y_validation, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=11, stratify=y_temp)
+
+print(x_train.shape, x_validation.shape, x_test.shape)
+print(y_train.mean(), y_validation.mean(), y_test.mean())
+
 # ------------------- 
 # ------------------- 
 # ------------------- 
