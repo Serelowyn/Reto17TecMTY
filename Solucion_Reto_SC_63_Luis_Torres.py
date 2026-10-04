@@ -11,54 +11,53 @@ from sklearn.neural_network import MLPClassifier
 
 # ------------------- Fin de las importaciones
 
-df = pd.read_csv(r"bank_marketing_RETO_DS_AS.csv")
+data = pd.read_csv(r"bank_marketing_RETO_DS_AS.csv")
 
 """primero para revisar la integridad del archivo"""
-print(df.head(10))
-print(df.info())
-print(df.dtypes)
-print(df.shape)
+print(data.head(10))
+print(data.info())
+print(data.dtypes)
+print(data.shape)
 #datos analiticos
-print(df.describe())
+print(data.describe())
 #verificacion de celdas vacias, aunque en este caso se use la palabra "unkwown" para los datos que no se saben
-print(df.isnull().sum())
+print(data.isnull().sum())
 
 #para los unkwown
-print("unknown")
-for columna in df.columns[df.dtypes == object]:
-    n_unknown = (df[columna] == "unknown").sum()
+for columna in data.columns[data.dtypes == object]:
+    n_unknown = (data[columna] == "unknown").sum()
     print(f"{columna}: {n_unknown}")
 
 """los datos perdidos estan en job = 51, education = 377, contact = 1982 y poutcome = 6783. no se hace dropna porque se perderia poutcome. unknown en poutcome significa que el cliente no fue contactado antes por lo cual nos sirve como una variable categorica"""
 
-print(pd.crosstab(df["poutcome"], df["pdays"] == -1))
+print(pd.crosstab(data["poutcome"], data["pdays"] == -1))
 #hay 6781 unknowns en poutcome
 
 # ------------------- tipos de variables
 
 """las variables con menos de 20 valores distintos se consideran categoricas"""
-print(df.nunique())
+print(data.nunique())
 
-num_cols = [c for c in df.columns if df[c].dtype != object and df[c].nunique() >= 20]
-cat_cols = [c for c in df.columns if c not in num_cols]
+num_cols = [c for c in data.columns if data[c].dtype != object and data[c].nunique() >= 20]
+cat_cols = [c for c in data.columns if c not in num_cols]
 
 print("numericas:", len(num_cols), num_cols)
 print("categoricas:", len(cat_cols), cat_cols)
 
 # ------------------- variable de salida
 
-print(df["y"].value_counts())
-print("No: %.1f" % (100 * sum(df["y"] == "no") / df.shape[0]))
-print("Si: %.1f" % (100 * sum(df["y"] == "yes") / df.shape[0]))
+print(data["y"].value_counts())
+print("No: %.1f" % (100 * sum(data["y"] == "no") / data.shape[0]))
+print("Si: %.1f" % (100 * sum(data["y"] == "yes") / data.shape[0]))
 
 """5213 clientes no adquirieron el plan y 3787 si. se tiene 57.9% de exactitud, eso me quiere decir que todos los modelos tienen que superar ese porcentaje."""
 
-modelo_base = sum(df["y"] == "no") / df.shape[0]
+modelo_base = sum(data["y"] == "no") / data.shape[0]
 print(f"modelo base: {modelo_base:.3f}")
 
 # ------------------- histograma para ver la distribucion
 
-df[num_cols].hist(bins=30, figsize=(14, 8))
+data[num_cols].hist(bins=30, figsize=(14, 8))
 plt.tight_layout()
 plt.show()
 
@@ -66,7 +65,7 @@ plt.show()
 
 # -------------------# transformacion de datos categoricos y numericos
 #copia del df para el modelo
-df_model = df.copy()
+df_model = data.copy()
 
 """para el sesgo positivo se aplica una transformacion logaritmica. se usa log(1 + x) en duration, campaign y previous porque son no negativas y tienen ceros"""
 sesgadas = ["duration", "campaign", "previous"]
@@ -84,7 +83,7 @@ binarias = ["default", "housing", "loan", "y"]
 for columna in binarias:
     df_model[columna] = (df_model[columna] == "yes").astype(int)
 
-"""las categoricas con mas de dos niveles se pasan a OHEncoder. drop_first=True sirve para evitar repetir la info"""
+"""las categoricas con mas de dos niveles se pasan a OHEncoder. drop_first=True sirve para evitar repetir la info. no se usa LabelEncoder porque le asigna un entero a cada nivel (0, 1, 2...) y eso le inventa un orden a variables que no lo tienen, como job o month, y la regresion logistica y la red neuronal tomarian ese orden como si fuera real. con OHEncoder cada nivel es una columna 0/1 y ninguno vale mas que otro"""
 multiclase = ["job", "marital", "education", "contact", "month", "poutcome"]
 df_model = pd.get_dummies(df_model, columns=multiclase, drop_first=True, dtype=int)
 
@@ -177,6 +176,9 @@ print("mejor C en validacion:", mejor_C)
 
 modelo_RL = LogisticRegression(C=mejor_C, penalty=mejor_RL["penalty"], solver=mejor_RL["solver"], max_iter=1000, random_state=17)
 modelo_RL.fit(x_train, np.ravel(y_train))
+
+print("regresion logistica ajustada; exactitud de validacion =", modelo_RL.score(x_validation, y_validation))
+print(confusion_matrix(y_validation, modelo_RL.predict(x_validation)))
 
 # ------------------- modelo 2: red nueronal (perceptron multicapa)
 
@@ -353,13 +355,30 @@ mejor = res_NN.sort_values("validacion", ascending=False).iloc[0]
 mejor_alpha, mejor_neuronas = mejor["alpha"], int(mejor["neuronas"])
 print("mejor alpha:", mejor_alpha, "- mejor neuronas por capa:", mejor_neuronas)
 
-"""cuando tengo que (alpha=0.7) las curvas de entrenamiento y validacion crecen cerca una de la otra por eso es el mejor ajuste. alpha mas grande (entre 3-10) vuelve a bajar la validacion a 0.82 y 0.80 por que empieza el sub-entrenamiento, entonces el mejor en validacion es (alpha=0.7) con 21 neuronas por capa (0.8511) el cual empata con (alpha=1.0) con 11 neuronas, la exactitud de entrenamiento baja respecto al sobre-entrenado y eso es normal."""
+"""cuando tengo que (alpha=0.7) las curvas de entrenamiento y validacion crecen cerca una de la otra por eso es el mejor ajuste. alpha mas grande (entre 3-10) vuelve a bajar la validacion a 0.82 y 0.80 por que empieza el sub-entrenamiento, entonces el mejor en validacion es (alpha=0.7) con 21 neuronas por capa (0.8511) el cual empata con (alpha=1.0) con 11 neuronas, la exactitud de entrenamiento baja respecto al sobreentrenado y eso es normal."""
 
-modelo_NN = MLPClassifier(hidden_layer_sizes=(mejor_neuronas, mejor_neuronas),
+"""busqueda del numero de capas ocultas"""
+resultados_capas = []
+for capas in [1, 2, 3, 4]:
+    arquitectura = tuple([mejor_neuronas] * capas)
+    model = MLPClassifier(hidden_layer_sizes=arquitectura, max_iter=1000, alpha=mejor_alpha, random_state=42)
+    model.fit(x_train, y_train)
+    tr, va = model.score(x_train, y_train), model.score(x_validation, y_validation)
+    resultados_capas.append((capas, arquitectura, tr, va))
+    print(f"capas={capas} {arquitectura}: train={tr:.3f}, validacion={va:.3f}")
+
+res_capas = pd.DataFrame(resultados_capas, columns=["capas", "arquitectura", "train", "validacion"])
+mejor_arquitectura = res_capas.sort_values(["validacion", "capas"], ascending=[False, True]).iloc[0]["arquitectura"]
+print("mejor:", mejor_arquitectura)
+
+modelo_NN = MLPClassifier(hidden_layer_sizes=mejor_arquitectura,
                           max_iter=1000, alpha=mejor_alpha, random_state=42)
 modelo_NN.fit(x_train, y_train)
 
-# ------------------- matriz de confusion y evaluacion con el conjunto de prueba
+print("red neuronal ajustada: exactitud validacion =", modelo_NN.score(x_validation, y_validation))
+print(confusion_matrix(y_validation, modelo_NN.predict(x_validation)))
+
+# ------------------- seleccion del mejor modelo con validacion
 
 modelos = {"regresion logistica": modelo_RL, "red neuronal": modelo_NN}
 exactitudes = {}
@@ -367,27 +386,44 @@ exactitudes = {}
 fig, axes = plt.subplots(1, 2, figsize=(11, 4))
 for ax, (nombre, modelo) in zip(axes, modelos.items()):
     acc_valid = modelo.score(x_validation, y_validation)
-    acc_test = modelo.score(x_test, y_test)
-    pr = modelo.predict(x_test)
-    cm = confusion_matrix(y_test, pr)
+    pr = modelo.predict(x_validation)
+    cm = confusion_matrix(y_validation, pr)
     vn, fp, fn, vp = cm.ravel()
-    exactitudes[nombre] = (acc_valid, acc_test)
+    exactitudes[nombre] = acc_valid
 
     print(nombre)
     print("exactitud con validacion =", acc_valid)
-    print("exactitud con prueba =", acc_test)
     print(cm)
     print(f"VN={vn}, FP={fp}, FN={fn}, VP={vp}")
 
     ConfusionMatrixDisplay(cm, display_labels=["no", "si"]).plot(ax=ax, colorbar=False)
-    ax.set_title(f"{nombre} (prueba)")
+    ax.set_title(f"{nombre} (validacion)")
 plt.tight_layout()
+plt.show()
+
+mejor_nombre = max(exactitudes, key=exactitudes.get)
+mejor_modelo = modelos[mejor_nombre]
+print("mejor modelo:", mejor_nombre)
+
+# ------------------- matriz de confusion y evaluacion con el conjunto de prueba
+
+"""el conjunto de prueba solo se usa con el mejor modelo"""
+acc_test = mejor_modelo.score(x_test, y_test)
+cm = confusion_matrix(y_test, mejor_modelo.predict(x_test))
+vn, fp, fn, vp = cm.ravel()
+
+print(mejor_nombre)
+print("exactitud con prueba =", acc_test)
+print(cm)
+print(f"VN={vn}, FP={fp}, FN={fn}, VP={vp}")
+
+ConfusionMatrixDisplay(cm, display_labels=["no", "si"]).plot(colorbar=False)
+plt.title(f"{mejor_nombre} (prueba)")
 plt.show()
 
 resumen = pd.DataFrame({
     "modelo": ["modelo inicial base", "regresion logistica", "red nueronal"],
-    "exactitud_validacion": [modelo_base, *exactitudes["regresion logistica"][:1], *exactitudes["red neuronal"][:1]],
-    "exactitud_prueba": [modelo_base, exactitudes["regresion logistica"][1], exactitudes["red neuronal"][1]],
+    "exactitud_validacion": [modelo_base, exactitudes["regresion logistica"], exactitudes["red neuronal"]],
 })
 
 
