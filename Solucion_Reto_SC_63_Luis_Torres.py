@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from IPython.display import display
 from sklearn.neural_network import MLPClassifier
 
@@ -360,14 +360,36 @@ modelo_NN = MLPClassifier(hidden_layer_sizes=(mejor_neuronas, mejor_neuronas),
                           max_iter=1000, alpha=mejor_alpha, random_state=42)
 modelo_NN.fit(x_train, y_train)
 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
-# ------------------- 
+# ------------------- matriz de confusion y evaluacion con el conjunto de prueba
+
+modelos = {"regresion logistica": modelo_RL, "red neuronal": modelo_NN}
+exactitudes = {}
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+for ax, (nombre, modelo) in zip(axes, modelos.items()):
+    acc_valid = modelo.score(x_validation, y_validation)
+    acc_test = modelo.score(x_test, y_test)
+    pr = modelo.predict(x_test)
+    cm = confusion_matrix(y_test, pr)
+    vn, fp, fn, vp = cm.ravel()
+    exactitudes[nombre] = (acc_valid, acc_test)
+
+    print(nombre)
+    print("exactitud con validacion =", acc_valid)
+    print("exactitud con prueba =", acc_test)
+    print(cm)
+    print(f"VN={vn}, FP={fp}, FN={fn}, VP={vp}")
+
+    ConfusionMatrixDisplay(cm, display_labels=["no", "si"]).plot(ax=ax, colorbar=False)
+    ax.set_title(f"{nombre} (prueba)")
+plt.tight_layout()
+plt.show()
+
+resumen = pd.DataFrame({
+    "modelo": ["modelo inicial base", "regresion logistica", "red nueronal"],
+    "exactitud_validacion": [modelo_base, *exactitudes["regresion logistica"][:1], *exactitudes["red neuronal"][:1]],
+    "exactitud_prueba": [modelo_base, exactitudes["regresion logistica"][1], exactitudes["red neuronal"][1]],
+})
+
+
+display(resumen.round(4))
